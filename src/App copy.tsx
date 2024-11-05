@@ -1,9 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
-import { FormData } from './types';
-import { fields } from './fields';
-import { generateParkingCode } from './generateParkingCode';
-import { getCurrencySymbol } from './getCurrencySymbol';
+
+interface FormData {
+  id?: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  carModel: string;
+  licensePlate: string;
+  startDateTime: string;
+  endDateTime: string;
+  parkingArea?: string;
+  discountPercentage?: string;
+  totalCost?: number;
+  currency?: string;
+}
 
 const App: React.FC = () => {
   const initialFormData: FormData = {
@@ -22,7 +33,22 @@ const App: React.FC = () => {
   const [allData, setAllData] = useState<FormData[]>([]);
   const [totalCost, setTotalCost] = useState<number>(0);
   const [selectedCurrency, setSelectedCurrency] = useState<string>("USD");
+  const [exchangeRates, setExchangeRates] = useState<{ [key: string]: number }>({});
+
+  const getCurrencySymbol = (currency: string) => {
+    const symbol: { [key: string]:string } = { USD: "$", EUR: "€", PLN: "zł" };
+    return symbol[currency] || "$";
+  }
   
+  const generateParkingCode = (): string => {
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const numbers = "0123456789";
+    const randomLetters = letters.charAt(Math.floor(Math.random() * letters.length));
+    const randomNumbers = Array.from({length: 2}, () => numbers.charAt(Math.floor(Math.random() * numbers.length))).join("");
+    
+    return randomLetters + randomNumbers;
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
@@ -179,6 +205,14 @@ const App: React.FC = () => {
     }
   };
 
+  const fields = [
+    { name: "firstName", placeholder: "First Name" },
+    { name: "lastName", placeholder: "Last Name" },
+    { name: "phone", placeholder: "Phone" },
+    { name: "carModel", placeholder: "Car Model" },
+    { name: "licensePlate", placeholder: "License Plate" },
+  ] as const;
+
   return (
     <div>
       <h1>Submit Data</h1>
@@ -226,7 +260,7 @@ const App: React.FC = () => {
           <option value="EUR">EUR</option>
           <option value="PLN">PLN</option>
         </select>
-        <h2>Total Cost {getCurrencySymbol(selectedCurrency)}: {totalCost.toFixed(2)}</h2>
+        <h2>Total Cost {getCurrencySymbol(selectedCurrency)}:{totalCost.toFixed(2)}</h2>
         <button type='submit'>Submit</button>
         <button type='button' onClick={handleGetData}>GET</button>
         {data.id && (
@@ -242,7 +276,7 @@ const App: React.FC = () => {
             <strong>Car Model:</strong> {item.carModel}<br />
             <strong>License Plate:</strong> {item.licensePlate}<br />
             <strong>Parking Area:</strong> {item.parkingArea}<br />
-            <strong>Total Cost:</strong> {getCurrencySymbol(selectedCurrency)} {item.totalCost ? item.totalCost.toFixed(2) : "0.00"}<br />
+            <strong>Total Cost:</strong> {getCurrencySymbol(selectedCurrency)}{item.totalCost ? item.totalCost.toFixed(2) : "0.00"}<br />
             <strong>Start Date and Time:</strong> {item.startDateTime.replace("T", " from ")}<br />
             <strong>End Date and Time:</strong> {item.endDateTime.replace("T", " to ")}<br />
             <button type='button' onClick={() => handleEdit(index)}>Edit</button>

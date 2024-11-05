@@ -81,7 +81,7 @@ app.post("/api/calculate", async (req, res) => {
         let convertedCost = totalCost;
 
         if(currency && currency !== "USD") {
-            convertedCost = await convertCurrency(totalCost, "USD", currency, paymentDate);
+            convertedCost = convertCurrency(totalCost, currency);
         }
         
         res.json({ totalCost: convertedCost, currency: currency || "USD" });
@@ -90,35 +90,6 @@ app.post("/api/calculate", async (req, res) => {
         res.status(500).json({ error: "Error fetching exchange rates" });
     }
 });
-
-// app.post("/api/calculate", async (req, res) => {
-//     const { startDateTime, endDateTime, discountPercentage } = req.body;
-//     const totalCost = calculateTotalCost(startDateTime, endDateTime, discountPercentage);
-
-//     if(totalCost.error) {
-//         return res.status(400).json({ error: totalCost.error });
-//     }
-
-//     try {
-//         const exchangeResponse = await axios.get("https://api.exchangeratesapi.io/latest?base=USD&access_key=S07jSaHz4AaKPF2ghR5oWTqSDxfzkDpS");
-    
-//         console.log("Exchange Response:", exchangeResponse.data);
-    
-//         const rates = exchangeResponse.data.rates;
-    
-//         if (!rates) {
-//             return res.status(500).json({ error: "Exchange rates not available" });
-//         }
-    
-//         const totalCostEUR = totalCost * (rates.EUR || 1);
-//         const totalCostPLN = totalCost * (rates.PLN || 1);
-    
-//         res.json({ totalCost, totalCostEUR, totalCostPLN });
-//     } catch (error) {
-//         console.error("Error fetching exchange rates:", error);
-//         res.status(500).json({ error: "Error fetching exchange rates" });
-//     }
-// });
 
 app.post("/api/data", async (req, res) => {
     const session = store.openSession();
