@@ -1,4 +1,11 @@
 export const getCurrencySymbol = (currency: string) => {
-    const symbol: { [key: string]:string } = { USD: "$", EUR: "€", PLN: "zł" };
-    return symbol[currency] || "$";
+  switch(currency) {
+    case "EUR": 
+      return "€";
+    case "PLN":
+      return "zł";
+    case "USD":
+      default:
+        return "$";
   }
+}

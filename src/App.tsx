@@ -30,7 +30,6 @@ const App: React.FC = () => {
       ...prev, 
       [name]: name === "discountPercentage" ? (value ? parseFloat(value).toString() : "0") : value,
     }));
-
   };
 
   useEffect(() => {
@@ -65,8 +64,11 @@ const App: React.FC = () => {
   };
 
   const handleCurrencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedCurrency(e.target.value);
-    setData(prev => ({ ...prev, currency: e.target.value }));
+     const newCurrency = e.target.value
+    setSelectedCurrency(newCurrency);
+
+    setData(prev => ({ ...prev, currency: newCurrency }));
+    calculateTotalCost();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,25 +101,22 @@ const App: React.FC = () => {
 
   const handleGetData = async (e: React.FormEvent) => {
     e.preventDefault();
-  
     try {
-      const response = await fetch("/api/data", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setAllData(data.map((item: FormData) => ({
-          ...item,
-          currency: item.currency || "USD",
-        })));
-      } else {
-        console.error("Error retrieving data");
-      }
+        const response = await fetch("/api/data", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+        if (response.ok) {
+            const data = await response.json();
+            setAllData(data);
+            setSelectedCurrency(data[0].currency);
+        } else {
+            console.error("Error retrieving data");
+        }
     } catch (error) {
-      console.error("Error:", error);
+        console.error("Error:", error);
     }
   };
 
@@ -131,7 +130,7 @@ const App: React.FC = () => {
   };
 
   const handleUpdate = async () => {
-    calculateTotalCost();
+    await calculateTotalCost();
 
     try {
         const response = await fetch(`/api/data/${data.id}`, {
@@ -142,7 +141,7 @@ const App: React.FC = () => {
             body: JSON.stringify({
                 ...data,
                 parkingArea: data.parkingArea,
-                totalCost: totalCost,
+                totalCost,
                 currency: selectedCurrency,
             }),
         });
@@ -242,7 +241,7 @@ const App: React.FC = () => {
             <strong>Car Model:</strong> {item.carModel}<br />
             <strong>License Plate:</strong> {item.licensePlate}<br />
             <strong>Parking Area:</strong> {item.parkingArea}<br />
-            <strong>Total Cost:</strong> {getCurrencySymbol(selectedCurrency)} {item.totalCost ? item.totalCost.toFixed(2) : "0.00"}<br />
+            <strong>Total Cost</strong> {getCurrencySymbol(item.currency || "")}: {item.totalCost?.toFixed(2)}<br />
             <strong>Start Date and Time:</strong> {item.startDateTime.replace("T", " from ")}<br />
             <strong>End Date and Time:</strong> {item.endDateTime.replace("T", " to ")}<br />
             <button type='button' onClick={() => handleEdit(index)}>Edit</button>

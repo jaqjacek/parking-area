@@ -18,8 +18,7 @@ store.authOptions = {
 };
 store.initialize();
 
-
-const weekdayRate = 1.15
+const weekdayRate = 1.15;
 const weekendRate = weekdayRate * 1.3;
 let exchangeRates = {};
 
@@ -47,15 +46,14 @@ function calculateTotalCost(startDateTime, endDateTime, discountPercentage) {
 }
 
 async function fetchExchangeRates() {
-    try{
+    try {
         const response = await fetch(`https://api.exchangeratesapi.io/latest?access_key=927f45a497ac85d5cda8d9eaff8e9c4e`);
         const data = await response.json();
         
         if(data.rates) {
             exchangeRates = data.rates;
-            console.log("Exchange Rates", exchangeRates);
         } else {
-            console.error("Error can find currncies");
+            console.error("Error can find currencies");
         }
     } catch(error) {
         console.error("Error:", error);
@@ -64,7 +62,7 @@ async function fetchExchangeRates() {
 
 function convertCurrency(amount, currency) {
     if(!exchangeRates[currency]) {
-        throw new Error(`Rates for ${currency} can not find in exchangeRates`);
+        throw new Error(`Rates for ${currency} cannot be found in exchangeRates`);
     }
     return amount * exchangeRates[currency];
 }
@@ -95,6 +93,7 @@ app.post("/api/data", async (req, res) => {
     const session = store.openSession();
     try {
         const data = req.body;
+        console.log("Data being saved:", data);
         await session.store(data);
         await session.saveChanges();
         res.status(201).send({ message: "Data saved successfully!" });
@@ -120,6 +119,7 @@ app.get("/api/data", async (req, res) => {
             parkingArea: doc.parkingArea,
             discountPercentage: doc.discountPercentage,
             totalCost: doc.totalCost,
+            currency: doc.currency || "USD",
         }));
         res.status(200).send(formattedData);
     } catch (error) {
