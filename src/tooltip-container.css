@@ -1,0 +1,25 @@
+.container {
+    position: relative;
+}
+
+.input:invalid {
+    border-color: red;
+}
+
+.input:invalid:focus {
+    outline-color: red;
+}
+
+.error-message {
+    display: none;
+    color: red;
+    font-size: 16px;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+}
+
+.input:invalid ~ .error-message {
+    display: block;
+}

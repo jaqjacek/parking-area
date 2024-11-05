@@ -7,6 +7,7 @@ import './App.css';
 import './input-container.css';
 import './dateInput.css';
 import './dropdown.css';
+import './tooltip-container.css';
 
 const App: React.FC = () => {
   const initialFormData: FormData = {
@@ -207,9 +208,7 @@ const App: React.FC = () => {
             </div>
           ))}
         <form onSubmit={handleSubmit}>
-          <div
-            className='container'
-          >
+        <div className='container'>
             <input 
               type='number'
               name='discountPercentage'
@@ -220,6 +219,7 @@ const App: React.FC = () => {
               onChange={handleChange}
             />
             <label className='label'>Discount Percentage:</label>
+            <span className="error-message">Value cannot exceed 100%</span>
           </div>
           <div id="dateDiv">
             <label>Start Date and Time:</label>
@@ -257,8 +257,16 @@ const App: React.FC = () => {
             <option className="dropdown-list-item" value="PLN">PLN</option>
           </select>
           <h2>Total Cost {getCurrencySymbol(selectedCurrency)}: {totalCost.toFixed(2)}</h2>
-          <button type='submit'>Submit</button>
-          <button type='button' onClick={handleGetData}>GET</button>
+          <button type='submit'>
+            <span className="box">
+              Submit
+            </span>
+          </button>
+          <button type='button' onClick={handleGetData}>
+            <span className="box">
+              GET
+            </span>
+          </button>
           {data.id && (
             <button type='button' onClick={handleUpdate}>Update</button>
           )}
