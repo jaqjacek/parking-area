@@ -1,7 +1,7 @@
 export const fields = [
-    { name: "firstName", placeholder: "First Name" },
-    { name: "lastName", placeholder: "Last Name" },
-    { name: "phone", placeholder: "Phone" },
-    { name: "carModel", placeholder: "Car Model" },
-    { name: "licensePlate", placeholder: "License Plate" },
+    { name: "firstName", label: "First Name" },
+    { name: "lastName", label: "Last Name" },
+    { name: "phone", label: "Phone" },
+    { name: "carModel", label: "Car Model" },
+    { name: "licensePlate", label: "License Plate" },
   ] as const;

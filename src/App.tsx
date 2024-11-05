@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import './App.css';
-import { FormData } from './types';
+import { FormData } from './FormData';
 import { fields } from './fields';
 import { generateParkingCode } from './generateParkingCode';
 import { getCurrencySymbol } from './getCurrencySymbol';
+import './App.css';
+import './input-container.css';
+import './dateInput.css';
+import './dropdown.css';
 
 const App: React.FC = () => {
   const initialFormData: FormData = {
@@ -179,76 +182,107 @@ const App: React.FC = () => {
   };
 
   return (
-    <div>
-      <h1>Submit Data</h1>
-      <form onSubmit={handleSubmit}>
-        {fields.map((field) => (
-          <input
-            key={field.name}
-            type='text'
-            name={field.name}
-            placeholder={field.placeholder}
-            value={data[field.name as keyof FormData]}
-            onChange={handleChange}
-            required
-          />
-        ))}
-        <label>Discount Percentage:</label>
-        <input 
-          type='number'
-          name='discountPercentage'
-          value={data.discountPercentage}
-          min={0}
-          max={100}
-          onChange={handleChange}
-        />
-        <label>Start Date and Time:</label>
-        <input
-          type='datetime-local'
-          name='startDateTime'
-          value={data.startDateTime}
-          onChange={handleChange}
-          required
-        />
-        <label>End Date and Time:</label>
-        <input
-          type='datetime-local'
-          name='endDateTime'
-          value={data.endDateTime}
-          onChange={handleChange}
-          required
-          onBlur={calculateTotalCost}
-        />
-        <label>Select Currency:</label>
-        <select value={selectedCurrency} onChange={handleCurrencyChange}>
-          <option value="USD">USD</option>
-          <option value="EUR">EUR</option>
-          <option value="PLN">PLN</option>
-        </select>
-        <h2>Total Cost {getCurrencySymbol(selectedCurrency)}: {totalCost.toFixed(2)}</h2>
-        <button type='submit'>Submit</button>
-        <button type='button' onClick={handleGetData}>GET</button>
-        {data.id && (
-          <button type='button' onClick={handleUpdate}>Update</button>
-        )}
-      </form>
-      <h2>Received Data</h2>
-      <ul>
-        {allData.map((item, index) => (
-          <li key={item.id}>
-            <strong>Name:</strong> {item.firstName} {item.lastName}<br />
-            <strong>Phone:</strong> {item.phone}<br />
-            <strong>Car Model:</strong> {item.carModel}<br />
-            <strong>License Plate:</strong> {item.licensePlate}<br />
-            <strong>Parking Area:</strong> {item.parkingArea}<br />
-            <strong>Total Cost</strong> {getCurrencySymbol(item.currency || "")}: {item.totalCost?.toFixed(2)}<br />
-            <strong>Start Date and Time:</strong> {item.startDateTime.replace("T", " from ")}<br />
-            <strong>End Date and Time:</strong> {item.endDateTime.replace("T", " to ")}<br />
-            <button type='button' onClick={() => handleEdit(index)}>Edit</button>
-            <button type='button' onClick={() => handleDelete(index)}>Delete</button>
-          </li>
-        ))}
-      </ul>
+    <div className='main-container'>
+      <div className='left-container'>
+          {fields.map((field) => (
+            <div 
+              key={field.name}
+              className='container'
+            >
+              <input
+              type='text'
+              id={field.name}
+              name={field.name}
+              value={data[field.name as keyof FormData]}
+              onChange={handleChange}
+              className="input"
+              required
+              />
+              <label 
+                htmlFor={field.name}
+                className='label'
+              >
+                {field.label}
+              </label>
+            </div>
+          ))}
+        <form onSubmit={handleSubmit}>
+          <div
+            className='container'
+          >
+            <input 
+              type='number'
+              name='discountPercentage'
+              value={data.discountPercentage}
+              className="input"
+              min={0}
+              max={100}
+              onChange={handleChange}
+            />
+            <label className='label'>Discount Percentage:</label>
+          </div>
+          <div id="dateDiv">
+            <label>Start Date and Time:</label>
+            <input
+              type='datetime-local'
+              name='startDateTime'
+              value={data.startDateTime}
+              onChange={handleChange}
+              id="dateInput"
+              className="dateInput"
+              required
+              placeholder="Date:  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MMYYYY"
+            />
+            <label>End Date and Time:</label>
+            <input
+              type='datetime-local'
+              name='endDateTime'
+              value={data.endDateTime}
+              onChange={handleChange}
+              required
+              onBlur={calculateTotalCost}
+              id="dateInput"
+              className="dateInput"
+              placeholder="Date:  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MMYYYY"
+            />
+          </div>
+          <label>Select Currency: </label>
+          <select 
+            value={selectedCurrency} 
+            onChange={handleCurrencyChange}
+            className="dropdown-list"
+          >
+            <option className="dropdown-list-item" value="USD">USD</option>
+            <option className="dropdown-list-item" value="EUR">EUR</option>
+            <option className="dropdown-list-item" value="PLN">PLN</option>
+          </select>
+          <h2>Total Cost {getCurrencySymbol(selectedCurrency)}: {totalCost.toFixed(2)}</h2>
+          <button type='submit'>Submit</button>
+          <button type='button' onClick={handleGetData}>GET</button>
+          {data.id && (
+            <button type='button' onClick={handleUpdate}>Update</button>
+          )}
+        </form>
+      </div>
+      <div className='right-container'>
+        <h2>Received Data</h2>
+        <ul>
+          {allData.map((item, index) => (
+            <li key={item.id}>
+              <strong>Name:</strong> {item.firstName} {item.lastName}<br />
+              <strong>Phone:</strong> {item.phone}<br />
+              <strong>Car Model:</strong> {item.carModel}<br />
+              <strong>License Plate:</strong> {item.licensePlate}<br />
+              <strong>Parking Area:</strong> {item.parkingArea}<br />
+              <strong>Total Cost</strong> {getCurrencySymbol(item.currency || "")}: {item.totalCost?.toFixed(2)}<br />
+              <strong>Start Date and Time:</strong> {item.startDateTime.replace("T", " from ")}<br />
+              <strong>End Date and Time:</strong> {item.endDateTime.replace("T", " to ")}<br />
+              <button type='button' onClick={() => handleEdit(index)}>Edit</button>
+              <button type='button' onClick={() => handleDelete(index)}>Delete</button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };
