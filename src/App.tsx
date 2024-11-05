@@ -13,6 +13,7 @@ interface FormData {
   parkingArea?: string;
   discountPercentage?: string;
   totalCost?: number;
+  currency?: string;
 }
 
 const App: React.FC = () => {
@@ -25,12 +26,20 @@ const App: React.FC = () => {
     startDateTime: "",
     endDateTime: "",
     discountPercentage: "",
+    currency: "USD",
   };
 
   const [data, setData] = useState<FormData>(initialFormData);
   const [allData, setAllData] = useState<FormData[]>([]);
   const [totalCost, setTotalCost] = useState<number>(0);
+  const [selectedCurrency, setSelectedCurrency] = useState<string>("USD");
+  const [exchangeRates, setExchangeRates] = useState<{ [key: string]: number }>({});
 
+  const getCurrencySymbol = (currency: string) => {
+    const symbol: { [key: string]:string } = { USD: "$", EUR: "€", PLN: "zł" };
+    return symbol[currency] || "$";
+  }
+  
   const generateParkingCode = (): string => {
     const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const numbers = "0123456789";
@@ -47,15 +56,14 @@ const App: React.FC = () => {
       ...prev, 
       [name]: name === "discountPercentage" ? (value ? parseFloat(value).toString() : "0") : value,
     }));
-  
-    if (name === "discountPercentage" || name === "startDateTime" || name === "endDateTime") {
-      calculateTotalCost();
-    }
+    // if (name === "discountPercentage" || name === "startDateTime" || name === "endDateTime") {
+    //   calculateTotalCost();
+    // }
   };
 
   useEffect(() => {
     calculateTotalCost();
-  }, [data.discountPercentage, data.startDateTime, data.endDateTime]);
+  }, [data.discountPercentage, data.startDateTime, data.endDateTime, selectedCurrency]);
 
   const calculateTotalCost = async () => {
     try {
@@ -68,18 +76,25 @@ const App: React.FC = () => {
           startDateTime: data.startDateTime,
           endDateTime: data.endDateTime,
           discountPercentage: data.discountPercentage,
+          currency: selectedCurrency,
+          paymentDate: new Date().toISOString().split("T")[0],
         }),
       });
 
       if(response.ok) {
-        const { totalCost } = await response.json();
-        setTotalCost(totalCost);
+        const { totalCost: costInSelecteedCurrency } = await response.json();
+        setTotalCost(costInSelecteedCurrency);
       } else {
         console.error("Error calculating total cost.");
       }
     } catch(error) {
       console.error("Error:", error);
     }
+  };
+
+  const handleCurrencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCurrency(e.target.value);
+    setData(prev => ({ ...prev, currency: e.target.value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -96,6 +111,7 @@ const App: React.FC = () => {
           ...data,
           parkingArea: parkingCode,
           totalCost,
+          currency: selectedCurrency,
         }),
       });
       if (response.ok) {
@@ -121,7 +137,10 @@ const App: React.FC = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        setAllData(data);
+        setAllData(data.map((item: FormData) => ({
+          ...item,
+          currency: item.currency || "USD",
+        })));
       } else {
         console.error("Error retrieving data");
       }
@@ -134,6 +153,7 @@ const App: React.FC = () => {
     const itemToEdit = allData[index];
     if (itemToEdit) {
       setData(itemToEdit);
+      setSelectedCurrency(itemToEdit.currency || "USD");
       calculateTotalCost();
     }
   };
@@ -151,6 +171,7 @@ const App: React.FC = () => {
                 ...data,
                 parkingArea: data.parkingArea,
                 totalCost: totalCost,
+                currency: selectedCurrency,
             }),
         });
 
@@ -235,7 +256,13 @@ const App: React.FC = () => {
           required
           onBlur={calculateTotalCost}
         />
-        <h2>Total Cost: ${totalCost.toFixed(2)}</h2>
+        <label>Select Currency:</label>
+        <select value={selectedCurrency} onChange={handleCurrencyChange}>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+          <option value="PLN">PLN</option>
+        </select>
+        <h2>Total Cost {getCurrencySymbol(selectedCurrency)}:{totalCost.toFixed(2)}</h2>
         <button type='submit'>Submit</button>
         <button type='button' onClick={handleGetData}>GET</button>
         {data.id && (
@@ -251,7 +278,7 @@ const App: React.FC = () => {
             <strong>Car Model:</strong> {item.carModel}<br />
             <strong>License Plate:</strong> {item.licensePlate}<br />
             <strong>Parking Area:</strong> {item.parkingArea}<br />
-            <strong>Total Cost:</strong> ${item.totalCost ? item.totalCost.toFixed(2) : "0.00"}<br />
+            <strong>Total Cost:</strong> {getCurrencySymbol(selectedCurrency)}{item.totalCost ? item.totalCost.toFixed(2) : "0.00"}<br />
             <strong>Start Date and Time:</strong> {item.startDateTime.replace("T", " from ")}<br />
             <strong>End Date and Time:</strong> {item.endDateTime.replace("T", " to ")}<br />
             <button type='button' onClick={() => handleEdit(index)}>Edit</button>

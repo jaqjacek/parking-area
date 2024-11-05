@@ -3,12 +3,13 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const { DocumentStore } = require("ravendb");
 const fs = require("fs");
-const { error } = require("console");
+const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 const app = express();
 const port = 3000;
 
 app.use(cors());
+app.use(bodyParser.json());
 
 const store = new DocumentStore("https://a.free.pay-calculat.ravendb.cloud", "payment-calculations");
 store.authOptions = {
@@ -17,10 +18,12 @@ store.authOptions = {
 };
 store.initialize();
 
-app.use(bodyParser.json());
 
 const weekdayRate = 1.15
 const weekendRate = weekdayRate * 1.3;
+let exchangeRates = {};
+
+fetchExchangeRates();
 
 function calculateTotalCost(startDateTime, endDateTime, discountPercentage) {
     const start = new Date(startDateTime);
@@ -43,16 +46,79 @@ function calculateTotalCost(startDateTime, endDateTime, discountPercentage) {
     return cost - discount;
 }
 
-app.post("/api/calculate", (req, res) => {
-    const { startDateTime, endDateTime, discountPercentage } = req.body;
+async function fetchExchangeRates() {
+    try{
+        const response = await fetch(`https://api.exchangeratesapi.io/latest?access_key=927f45a497ac85d5cda8d9eaff8e9c4e`);
+        const data = await response.json();
+        
+        if(data.rates) {
+            exchangeRates = data.rates;
+            console.log("Exchange Rates", exchangeRates);
+        } else {
+            console.error("Error can find currncies");
+        }
+    } catch(error) {
+        console.error("Error:", error);
+    }
+}
+
+function convertCurrency(amount, currency) {
+    if(!exchangeRates[currency]) {
+        throw new Error(`Rates for ${currency} can not find in exchangeRates`);
+    }
+    return amount * exchangeRates[currency];
+}
+
+app.post("/api/calculate", async (req, res) => {
+    const { startDateTime, endDateTime, discountPercentage, currency, paymentDate } = req.body;
     const totalCost = calculateTotalCost(startDateTime, endDateTime, discountPercentage);
 
     if(totalCost.error) {
         return res.status(400).json({ error: totalCost.error });
     }
 
-    res.json({ totalCost });
+    try {
+        let convertedCost = totalCost;
+
+        if(currency && currency !== "USD") {
+            convertedCost = await convertCurrency(totalCost, "USD", currency, paymentDate);
+        }
+        
+        res.json({ totalCost: convertedCost, currency: currency || "USD" });
+    } catch (error) {
+        console.error("Error fetching exchange rates:", error);
+        res.status(500).json({ error: "Error fetching exchange rates" });
+    }
 });
+
+// app.post("/api/calculate", async (req, res) => {
+//     const { startDateTime, endDateTime, discountPercentage } = req.body;
+//     const totalCost = calculateTotalCost(startDateTime, endDateTime, discountPercentage);
+
+//     if(totalCost.error) {
+//         return res.status(400).json({ error: totalCost.error });
+//     }
+
+//     try {
+//         const exchangeResponse = await axios.get("https://api.exchangeratesapi.io/latest?base=USD&access_key=S07jSaHz4AaKPF2ghR5oWTqSDxfzkDpS");
+    
+//         console.log("Exchange Response:", exchangeResponse.data);
+    
+//         const rates = exchangeResponse.data.rates;
+    
+//         if (!rates) {
+//             return res.status(500).json({ error: "Exchange rates not available" });
+//         }
+    
+//         const totalCostEUR = totalCost * (rates.EUR || 1);
+//         const totalCostPLN = totalCost * (rates.PLN || 1);
+    
+//         res.json({ totalCost, totalCostEUR, totalCostPLN });
+//     } catch (error) {
+//         console.error("Error fetching exchange rates:", error);
+//         res.status(500).json({ error: "Error fetching exchange rates" });
+//     }
+// });
 
 app.post("/api/data", async (req, res) => {
     const session = store.openSession();
